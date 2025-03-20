@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--  默认的日志目录 /home/logs -->
+    <springProperty scope="context" name="log.path" source="bdt.log.path"/>
+    <!-- 默认日志输出格式 -->
+    <contextName>${HOSTNAME}</contextName>
+    <property name="DEFAULT_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS}$$%X{HOSTNAME}$$%level{}$$bdt-query-engine/%thread{}$$%X{traceId}$$%X{costTime}$$%file{}/%line{}$$%msg{}$$%X{apmTraceID}%n"/>
+    <property name="MAX_HISTORY" value="30"/>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %highlight(%-5level) %red(%X{traceId}) %cyan(%logger{50}) -
+                %yellow([%file:%line]) - %msg%n
+            </pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 错误日志，按天切分 -->
+    <appender name="ROLLING_FILE_ERROR_LOGS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/error.${hostname}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${DEFAULT_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!--全文日志，按天切分-->
+    <appender name="ROLLING_LOGS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/application_elk.${hostname}.%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <!--保留30天-->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${DEFAULT_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ROLLING_FILE_ERROR_LOGS"/>
+            <appender-ref ref="ROLLING_LOGS"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dohko">
+        <root level="DEBUG">
+            <appender-ref ref="ROLLING_FILE_ERROR_LOGS"/>
+            <appender-ref ref="ROLLING_LOGS"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="pre,prod">
+        <root level="INFO">
+            <appender-ref ref="ROLLING_FILE_ERROR_LOGS"/>
+            <appender-ref ref="ROLLING_LOGS"/>
+        </root>
+    </springProfile>
+
+</configuration>

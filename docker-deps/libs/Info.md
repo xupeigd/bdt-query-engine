@@ -1,0 +1,1 @@
+libs映射的根目录为maven的本地仓库目录下的com/quicksand/bigdata
